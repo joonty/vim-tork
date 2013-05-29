@@ -11,13 +11,13 @@ TODO: how to use
 Installation is easy-peasy if you're using [Vundle][2]. Just add this to your *.vimrc* file:
 
 ```vim
-Bundle 'joonty/vim-phpunitqf.git'
+Bundle 'joonty/vim-tork.git'
 ```
 and run `vim +BundleInstall +qall` from a terminal.
 
 If you aren't using vundle, you will have to extract the files in each folder to the correct folder in *.vim/*.
 
-**Note:** your vim installation must be compiled with *python* for this plugin to work.
+**Note:** your vim installation must be compiled with *ruby* for this plugin to work.
 
 ### Configuration
 
