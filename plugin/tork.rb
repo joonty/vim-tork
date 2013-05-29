@@ -15,19 +15,26 @@ module TorkLog
   end
 
   class LineMatcher
-    RUBY_ERROR_PATTERN = /^.+:[0-9]+:in/
-    TEST_ERROR_OR_FAILURE_PATTERN = /^\s\s[0-9]+\)/
+    PATTERNS = {
+      :ruby_error            => /^.+:[0-9]+:in/,
+      :test_error_or_failure => /^\s\s[0-9]+\)/,
+      :test_summary          => /^([0-9]+\s[a-z]+,)+/
+    }
 
     def initialize(line)
       self.line = line
     end
 
     def ruby_error?
-      !(line =~ RUBY_ERROR_PATTERN).nil?
+      !(line =~ PATTERNS[:ruby_error]).nil?
     end
 
     def test_error_or_failure?
-      !(line =~ TEST_ERROR_OR_FAILURE_PATTERN).nil?
+      !(line =~ PATTERNS[:test_error_or_failure]).nil?
+    end
+
+    def test_summary?
+      !(line =~ PATTERNS[:test_summary]).nil?
     end
 
   protected
