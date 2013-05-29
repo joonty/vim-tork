@@ -46,6 +46,7 @@ command! TorkKill call s:TorkSend("stop_running_test_files SIGKILL")
 command! TorkRerunPassed call s:TorkSend("rerun_passed_test_files")
 command! TorkRerunFailed call s:TorkSend("rerun_failed_test_files")
 command! TorkReabsorb call s:TorkSend("reabsorb_overhead")
+command! -nargs=1 -complete=file TorkParseLog call s:TorkParseLog(<f-args>)
 command! -nargs=+ -complete=customlist,s:TorkSendOptions Tork call s:TorkSend(<q-args>)
 
 function! s:TorkSend(arg_string)
@@ -65,6 +66,10 @@ function! s:TorkSendOptions(A, L, P)
                     \"rerun_passed_test_files",
                     \"quit"]
     return filter(l:options, 'v:val =~ a:A')
+endfunction
+
+function! s:TorkParseLog(log_file)
+    ruby tork_parse_log(VIM::evaluate("a:log_file"), VIM::evaluate("g:tork_debug == 1"))
 endfunction
 
 function! s:TorkSendFile(file)
