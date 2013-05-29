@@ -36,7 +36,46 @@ endif
 
 " Debug enabled
 if !exists("g:tork_debug")
-    let g:tork_debug=0
+    let g:tork_debug=1
 endif
-command! TorkRunAll <nop>
-command! Tork <nop>
+
+command! -nargs=* -complete=file TorkRun call s:TorkSendFile(<q-args>)
+command! TorkRunAll call s:TorkSend("run_test_files")
+command! TorkStop call s:TorkSend("stop_running_test_files")
+command! TorkKill call s:TorkSend("stop_running_test_files SIGKILL")
+command! TorkRerunPassed call s:TorkSend("rerun_passed_test_files")
+command! TorkRerunFailed call s:TorkSend("rerun_failed_test_files")
+command! TorkReabsorb call s:TorkSend("reabsorb_overhead")
+command! -nargs=+ -complete=customlist,s:TorkSendOptions Tork call s:TorkSend(<q-args>)
+
+function! s:TorkSend(arg_string)
+    let l:cmd = "echo " . a:arg_string . " | tork-remote tork-engine"
+    if g:tork_debug == 1
+        echo "tork: ". l:cmd
+    endif
+    call system(l:cmd)
+endfunction
+
+function! s:TorkSendOptions(A, L, P)
+    let l:options = ["run_test_file",
+                    \"run_test_files",
+                    \"reabsorb_overhead",
+                    \"stop_running_test_files",
+                    \"rerun_failed_test_files",
+                    \"rerun_passed_test_files",
+                    \"quit"]
+    return filter(l:options, 'v:val =~ a:A')
+endfunction
+
+function! s:TorkSendFile(file)
+    if len(a:file) == 0
+        let l:file = expand("%:p")
+    else
+        let l:file = a:file
+    endif
+    if len(l:file) == 0
+        echoerr "No test file specified"
+    else
+        call s:TorkSend("run_test_file " . l:file)
+    endif
+endfunction
