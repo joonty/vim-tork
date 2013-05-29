@@ -1,20 +1,20 @@
 " ------------------------------------------------------------------------------
-" Vim PHPUnitQf                                                {{{
+" Tork plugin for Vim                                                {{{
 "
-" Author: Jon Cairns <jon@joncairnsMaintainer.com>
+" Author: Jon Cairns <jon@joncairns.com>
 "
 " Description:
-" Run PHPUnit from within Vim and parse the output into the quickfix list, to
-" allow for easy navigation to failed test methods.
+" Send tork commands from within Vim and provide methods for parsing the log
+" files into the quickfix list.
 "
 " Requires: Vim 6.0 or newer, compiled with Python.
 "
 " Install:
-" Put this file and the python file in the vim plugins directory (~/.vim/plugin)
+" Put this file and the ruby file in the vim plugins directory (~/.vim/plugin)
 " to load it automatically, or load it manually with :so sauce.vim.
 "
 " License: MIT
-"                
+"
 " }}}
 " ------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ else
     " when we use pathogen for instance
     let $CUR_DIRECTORY=expand("<sfile>:p:h")
 
-    if filereadable($CUR_DIRECTORY."/tork.py")
+    if filereadable($CUR_DIRECTORY."/tork.rb")
         rubyfile $CUR_DIRECTORY/tork.rb
     else
         call confirm('tork.vim: Unable to find tork.rb. Place it in either your home vim directory or in the Vim runtime directory.', 'OK')
