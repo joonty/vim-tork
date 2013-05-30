@@ -25,6 +25,16 @@ module TorkLog
 
     end
 
+    shared_examples "the end of errors" do
+      let(:matcher) { LineMatcher.new line }
+
+      context "calling end_of_errors?" do
+        subject { matcher.end_of_errors? }
+
+        it { should be_true }
+      end
+    end
+
     shared_examples "a test error or failure" do
       let(:matcher) { LineMatcher.new line }
 
@@ -48,6 +58,16 @@ module TorkLog
 
     end
 
+    shared_examples "a finished line" do
+      let(:matcher) { LineMatcher.new line }
+
+      context "calling finished_line?" do
+        subject { matcher.finished_line? }
+
+        it { should be_true }
+      end
+    end
+
     shared_examples "a test summary" do
       let(:matcher) { LineMatcher.new line }
 
@@ -55,18 +75,6 @@ module TorkLog
         subject { matcher.test_summary? }
 
         it { should be_true }
-      end
-
-      context "calling ruby_error?" do
-        subject { matcher.ruby_error? }
-
-        it { should be_false }
-      end
-
-      context "calling test_error_or_failure?" do
-        subject { matcher.test_error_or_failure? }
-
-        it { should be_false }
       end
     end
 
@@ -105,13 +113,25 @@ module TorkLog
     context "an rpsec test summary line" do
       let(:line) { "6 examples, 0 failures" }
 
-      it_behaves_like "a test error or failure"
+      it_behaves_like "a test summary"
+      it_behaves_like "the end of errors"
     end
 
     context "a test::unit test summary line" do
-      let(:line) { "1 tests, 11 assertions, 3 failures, 0 errors, 0 pendings, 0 omissions, 0 notifications" }
+      let(:line) do <<ERR
+1 tests, 11 assertions, 3 failures, 0 errors, 0 pendings, 0 omissions, 0 notifications
+ERR
+      end
 
       it_behaves_like "a test summary"
+      it_behaves_like "the end of errors"
+    end
+
+    context "a test::unit finished line" do
+      let(:line) { "Finished in 1.0396772 seconds." }
+
+      it_behaves_like "a finished line"
+      it_behaves_like "the end of errors"
     end
   end
 end

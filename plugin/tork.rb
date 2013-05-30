@@ -1,5 +1,6 @@
 
 module TorkLog
+  module Error; end
   class ParserError < StandardError; end
 
   class Parser
@@ -11,20 +12,42 @@ module TorkLog
     end
 
     def parse
-      @file.each_line do |line|
+      parse_log
+      self
+    rescue Exception => e
+      e.extend Error
+      raise e
+    ensure
+      @file.close
+    end
+
+  protected
+    attr_writer :errors
+
+    def parse_log
+      while line = @file.gets
         matcher = LineMatcher.new line
         if matcher.ruby_error?
           parse_ruby_error line
           if errors.empty?
             raise ParserError, "Failed to read error from log file"
           end
+          break
+        elsif matcher.test_error_or_failure?
+          lines = [line]
+          while new_line = @file.gets
+            new_matcher = LineMatcher.new(new_line)
+            if new_matcher.test_error_or_failure? || new_matcher.end_of_errors?
+              @file.seek(-new_line.length, IO::SEEK_CUR)
+              break
+            end
+            lines << new_line
+          end
+          parse_error_or_failure(lines)
+
         end
       end
-      self
     end
-
-  protected
-    attr_writer :errors
 
     def parse_ruby_error(line)
       matches = line.split(':')
@@ -36,6 +59,9 @@ module TorkLog
                                      'E')
       end
     end
+
+    def parse_error_or_failure(lines)
+    end
   end
 
   TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
@@ -46,25 +72,23 @@ module TorkLog
 
   class LineMatcher
     PATTERNS = {
-      :ruby_error            => /^[^:]+:[0-9]+:in/,
-      :test_error_or_failure => /^\s\s[0-9]+\)/,
-      :test_summary          => /^([0-9]+\s[a-z]+,)+/
+      'ruby_error'            => /^[^:]+:[0-9]+:in/,
+      'test_error_or_failure' => /^\s\s[0-9]+\)/,
+      'test_summary'          => /^([0-9]+\s[a-z]+,)+/,
+      'finished_line'         => /^Finished/
     }
 
     def initialize(line)
       self.line = line
     end
 
-    def ruby_error?
-      !(line =~ PATTERNS[:ruby_error]).nil?
+    PATTERNS.each do |name, reg|
+      define_method("#{name}?") { !(line =~ PATTERNS[name]).nil? }
+      define_method("#{name}")  { PATTERNS[name].match(line) }
     end
 
-    def test_error_or_failure?
-      !(line =~ PATTERNS[:test_error_or_failure]).nil?
-    end
-
-    def test_summary?
-      !(line =~ PATTERNS[:test_summary]).nil?
+    def end_of_errors?
+      test_summary? || finished_line?
     end
 
   protected

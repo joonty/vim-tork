@@ -1,0 +1,22 @@
+Run options: --name "/(?i:a.*user)/" --seed 28304
+
+# Running tests:
+
+
+
+Finished tests in 0.000398s, 0.0000 tests/s, 0.0000 assertions/s.
+
+0 tests, 0 assertions, 0 failures, 0 errors, 0 skips
+Loaded suite tork-worker[0] test/integration/user_flows_test
+Started
+..E.
+
+  1) Error:
+test: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):
+NameError: undefined local variable or method `root_pathh' for #<UserFlowsTest:0x000000036f2388>
+    test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>'
+
+Finished in 1.0396772 seconds.
+
+4 tests, 3 assertions, 0 failures, 1 errors, 0 pendings, 0 omissions, 0 notifications
+75% passed
