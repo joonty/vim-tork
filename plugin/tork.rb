@@ -38,7 +38,11 @@ module TorkLog
     end
   end
 
-  TestError = Struct.new(:filename, :lnum, :text, :type, :error)
+  TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
+    def to_s
+      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text}','type':'#{type}'}"
+    end
+  end
 
   class LineMatcher
     PATTERNS = {
@@ -70,4 +74,9 @@ end
 
 def tork_parse_log(log_filename, allow_debug = False)
   parser = TorkLog::Parser.new File.open(log_filename)
+  parser.parse
+  errors = parser.errors.map(&:to_s)
+  error_string = "[#{errors.join(',')}]"
+  VIM.command("call setqflist(#{error_string})")
+  VIM.command('copen')
 end
