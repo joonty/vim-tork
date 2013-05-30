@@ -18,6 +18,8 @@ module TorkLog
     end
   end
 
+  Error = Struct.new(:file, :lnum, :text, :type, :error)
+
   class LineMatcher
     PATTERNS = {
       :ruby_error            => /^.+:[0-9]+:in/,
