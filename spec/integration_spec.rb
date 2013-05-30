@@ -38,7 +38,7 @@ module TorkLog
       end
     end
 
-    context "with a different ruby error log" do
+    context "a different ruby error log" do
       let(:log) { open_test_log_file 'ruby_error_2.log' }
       let(:errors) { Parser.new(log).parse.errors }
       after { log.close }
@@ -59,6 +59,15 @@ module TorkLog
         subject { errors.first }
 
         it_behaves_like "a ruby error"
+      end
+    end
+
+    context "an invalid ruby error" do
+      let(:log) { open_test_log_file 'invalid_ruby_error_1.log' }
+      let(:parser) { Parser.new(log) }
+
+      it "raises a parse error" do
+        expect { parser.parse }.to raise_error ParserError
       end
     end
   end

@@ -1,5 +1,7 @@
 
 module TorkLog
+  class ParserError < StandardError; end
+
   class Parser
     attr_reader :errors
 
@@ -13,7 +15,9 @@ module TorkLog
         matcher = LineMatcher.new line
         if matcher.ruby_error?
           parse_ruby_error line
-          break
+          if errors.empty?
+            raise ParserError, "Failed to read error from log file"
+          end
         end
       end
       self
@@ -24,8 +28,8 @@ module TorkLog
 
     def parse_ruby_error(line)
       matches = line.split(':')
-      matches.shift(3)
-      if matches.length >= 3
+      if matches.length >= 6
+        matches.shift(3)
         self.errors << TestError.new(matches.shift.strip,
                                      matches.shift.strip,
                                      matches.join(':').strip,
