@@ -15,10 +15,11 @@ module TorkLog
     end
 
     def errors
+      [Error.new('spec/integration_spec.rb', 6, 'syntax error, unexpected $end, expecting keyword_end (SyntaxError)', 'E')]
     end
   end
 
-  Error = Struct.new(:file, :lnum, :text, :type, :error)
+  Error = Struct.new(:filename, :lnum, :text, :type, :error)
 
   class LineMatcher
     PATTERNS = {
