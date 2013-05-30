@@ -11,6 +11,10 @@ module TorkLog
         if matcher.ruby_error?
         end
       end
+      self
+    end
+
+    def errors
     end
   end
 
