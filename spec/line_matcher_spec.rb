@@ -10,19 +10,6 @@ module TorkLog
 
         it { should be_true }
       end
-
-      context "calling test_error_or_failure?" do
-        subject { matcher.test_error_or_failure? }
-
-        it { should be_false }
-      end
-
-      context "calling test_summary?" do
-        subject { matcher.test_summary? }
-
-        it { should be_false }
-      end
-
     end
 
     shared_examples "the end of errors" do
@@ -43,19 +30,6 @@ module TorkLog
 
         it { should be_true }
       end
-
-      context "calling ruby_error?" do
-        subject { matcher.ruby_error? }
-
-        it { should be_false }
-      end
-
-      context "calling test_summary?" do
-        subject { matcher.test_summary? }
-
-        it { should be_false }
-      end
-
     end
 
     shared_examples "a finished line" do
@@ -83,13 +57,29 @@ module TorkLog
         "test/unit/address_test.rb:3:in `<top (required)>': uninitialized constant Tes (NameError)"
       }
 
+      let(:expected_match) { "test/unit/address_test.rb:3:in" }
+
       it_behaves_like "a ruby error"
+
+      context "calling ruby_error" do
+        let(:matches) { LineMatcher.new(line).ruby_error }
+
+        context "the whole match" do
+          subject { matches[0] }
+          it { should == "test/unit/address_test.rb:3:in" }
+        end
+        context "the second match" do
+          subject { matches[1] }
+          it { should == "test/unit/address_test.rb" }
+        end
+      end
     end
 
     context "the starting line of another ruby fatal error" do
       let(:line) {
           "/home/jon/.rvm/gems/ruby-1.9.3-p286/gems/tork-19.3.0/lib/tork/master.rb:62:in `load': spec/line_matcher_spec.rb:79: syntax error, unexpected keyword_end, expecting '}' (SyntaxError)"
       }
+      let(:expected_match) { "/home/jon/.rvm/gems/ruby-1.9.3-p286/gems/tork-19.3.0/lib/tork/master.rb:62:in" }
 
       it_behaves_like "a ruby error"
     end

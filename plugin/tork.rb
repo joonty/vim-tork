@@ -72,7 +72,7 @@ module TorkLog
 
   class LineMatcher
     PATTERNS = {
-      'ruby_error'            => /^[^:]+:[0-9]+:in/,
+      'ruby_error'            => /^([^:]+):([0-9]+):in/,
       'test_error_or_failure' => /^\s\s[0-9]+\)/,
       'test_summary'          => /^([0-9]+\s[a-z]+,)+/,
       'finished_line'         => /^Finished/
