@@ -6,7 +6,7 @@ def open_test_log_file(name)
 end
 
 module TorkLog
-  describe "tork log parsing integration" do
+  describe "parsing" do
     shared_examples "a ruby error" do
       its(:text)     { should == expected_text }
       its(:filename) { should == expected_filename }
@@ -14,20 +14,22 @@ module TorkLog
       its(:type)     { should == expected_type }
     end
 
-    context "with a ruby error log" do
+    context "a ruby error log" do
       let(:log) { open_test_log_file 'ruby_error_1.log' }
       let(:errors) { Parser.new(log).parse.errors }
       after { log.close }
 
-      subject { errors }
+      context "the error list" do
+        subject { errors }
 
-      it { should be_an Array }
-      its(:length) { should == 1 }
+        it { should be_an Array }
+        its(:length) { should == 1 }
+      end
 
       context "the error" do
         let(:expected_text) { 'syntax error, unexpected $end, expecting keyword_end (SyntaxError)' }
         let(:expected_filename) { 'spec/integration_spec.rb' }
-        let(:expected_lnum) { 6 }
+        let(:expected_lnum) { '6' }
         let(:expected_type) { 'E' }
 
         subject { errors.first }
@@ -41,15 +43,17 @@ module TorkLog
       let(:errors) { Parser.new(log).parse.errors }
       after { log.close }
 
-      subject { errors }
+      context "the error list" do
+        subject { errors }
 
-      it { should be_an Array }
-      its(:length) { should == 1 }
+        it { should be_an Array }
+        its(:length) { should == 1 }
+      end
 
       context "the error" do
         let(:expected_text) { 'syntax error, unexpected keyword_end, expecting \'}\' (SyntaxError)' }
         let(:expected_filename) { 'spec/error_spec.rb' }
-        let(:expected_lnum) { 15 }
+        let(:expected_lnum) { '15' }
         let(:expected_type) { 'E' }
 
         subject { errors.first }

@@ -1,29 +1,44 @@
 
 module TorkLog
   class Parser
+    attr_reader :errors
+
     def initialize(file)
       @file = file
+      self.errors = []
     end
 
     def parse
       @file.each_line do |line|
         matcher = LineMatcher.new line
         if matcher.ruby_error?
+          parse_ruby_error line
+          break
         end
       end
       self
     end
 
-    def errors
-      [Error.new('spec/integration_spec.rb', 6, 'syntax error, unexpected $end, expecting keyword_end (SyntaxError)', 'E')]
+  protected
+    attr_writer :errors
+
+    def parse_ruby_error(line)
+      matches = line.split(':')
+      matches.shift(3)
+      if matches.length >= 3
+        self.errors << TestError.new(matches.shift.strip,
+                                     matches.shift.strip,
+                                     matches.join(':').strip,
+                                     'E')
+      end
     end
   end
 
-  Error = Struct.new(:filename, :lnum, :text, :type, :error)
+  TestError = Struct.new(:filename, :lnum, :text, :type, :error)
 
   class LineMatcher
     PATTERNS = {
-      :ruby_error            => /^.+:[0-9]+:in/,
+      :ruby_error            => /^[^:]+:[0-9]+:in/,
       :test_error_or_failure => /^\s\s[0-9]+\)/,
       :test_summary          => /^([0-9]+\s[a-z]+,)+/
     }

@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 module TorkLog
-  describe Error do
+  describe TestError do
 
     shared_examples "an error" do
-      let(:error) { Error.new filename, lnum, text, type }
+      let(:error) { TestError.new filename, lnum, text, type }
 
       subject { error }
 
