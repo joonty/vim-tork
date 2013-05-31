@@ -3,6 +3,12 @@ module TorkLog
   module Error; end
   class ParserError < StandardError; end
 
+  TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
+    def to_s
+      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text}','type':'#{type}'}"
+    end
+  end
+
   class Parser
     attr_reader :errors
 
@@ -15,6 +21,7 @@ module TorkLog
       parse_log
       self
     rescue Exception => e
+      # Tag all exceptions with Torkify::Error
       e.extend Error
       raise e
     ensure
@@ -44,7 +51,6 @@ module TorkLog
             lines << new_line
           end
           parse_error_or_failure(lines)
-
         end
       end
     end
@@ -61,12 +67,18 @@ module TorkLog
     end
 
     def parse_error_or_failure(lines)
-    end
-  end
-
-  TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
-    def to_s
-      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text}','type':'#{type}'}"
+      text = lines.join.strip
+      lines.each do |line|
+        matches = LineMatcher.new(line).error_description
+        if matches
+          matches = matches.to_a
+          matches.shift
+          self.errors << TestError.new(matches.shift.strip,
+                                       matches.shift.strip,
+                                       text, 'E')
+          break
+        end
+      end
     end
   end
 
