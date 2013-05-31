@@ -72,7 +72,7 @@ module TorkLog
 
   class LineMatcher
     PATTERNS = {
-      'ruby_error'            => /^([^:]+):([0-9]+):in/,
+      'error_description'     => /^[\s#]*([^:]+):([0-9]+):in/,
       'test_error_or_failure' => /^\s\s[0-9]+\)/,
       'test_summary'          => /^([0-9]+\s[a-z]+,)+/,
       'finished_line'         => /^Finished/
@@ -90,6 +90,9 @@ module TorkLog
     def end_of_errors?
       test_summary? || finished_line?
     end
+
+    alias :ruby_error :error_description
+    alias :ruby_error? :error_description?
 
   protected
     attr_accessor :line
