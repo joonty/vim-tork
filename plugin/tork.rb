@@ -9,6 +9,34 @@ module TorkLog
     end
   end
 
+  class LogReader
+    attr_reader :line
+
+    def initialize(stream)
+      @stream = stream
+      @line = stream.gets
+    end
+
+    def forward
+      self.line = stream.gets
+      self
+    end
+
+
+    def matcher
+      @matcher ||= LineMatcher.new(line)
+    end
+
+  protected
+    attr_reader :stream
+    attr_writer :line
+
+    def line=(line)
+      @line = line
+      @matcher = nil
+    end
+  end
+
   class Parser
     attr_reader :errors
 
