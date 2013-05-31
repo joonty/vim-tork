@@ -40,6 +40,8 @@ module TorkLog
             raise ParserError, "Failed to read error from log file"
           end
           break
+        elsif tork_line_match = matcher.tork_load_line
+          @file_fallback = tork_line_match[1].strip + ".rb"
         elsif matcher.test_error_or_failure?
           lines = [line]
           while new_line = @file.gets
@@ -57,6 +59,7 @@ module TorkLog
 
     def parse_ruby_error(line)
       matches = line.split(':')
+      p matches
       if matches.length >= 6
         matches.shift(3)
         self.errors << TestError.new(matches.shift.strip,
@@ -68,6 +71,7 @@ module TorkLog
 
     def parse_error_or_failure(lines)
       text = lines.join.strip
+      added_error = false
       lines.each do |line|
         matches = LineMatcher.new(line).error_description
         if matches
@@ -76,14 +80,20 @@ module TorkLog
           self.errors << TestError.new(matches.shift.strip,
                                        matches.shift.strip,
                                        text, 'E')
+          added_error = true
           break
         end
+      end
+      unless added_error
+        self.errors << TestError.new(@file_fallback,
+                                     "0", text, 'E')
       end
     end
   end
 
   class LineMatcher
     PATTERNS = {
+      'tork_load_line'        => /^Loaded suite tork[^\s]+\s(.+)/,
       'error_description'     => /^[\s#]*([^:]+):([0-9]+):in/,
       'test_error_or_failure' => /^\s\s[0-9]+\)/,
       'test_summary'          => /^([0-9]+\s[a-z]+,)+/,
@@ -108,6 +118,11 @@ module TorkLog
 
   protected
     attr_accessor :line
+  end
+
+  class RubyErrorParser
+    def initialize()
+    end
   end
 end
 

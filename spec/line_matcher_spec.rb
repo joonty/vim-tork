@@ -22,6 +22,16 @@ module TorkLog
       end
     end
 
+    shared_examples "a tork load line" do
+      let(:matcher) { LineMatcher.new line }
+
+      context "calling tork_load_line?" do
+        subject { matcher.tork_load_line? }
+
+        it { should be_true }
+      end
+    end
+
     shared_examples "the end of errors" do
       let(:matcher) { LineMatcher.new line }
 
@@ -188,6 +198,24 @@ LIN
       end
     end
 
+    context "a tork load line" do
+      let(:line) { "Loaded suite tork-worker[1] test/unit/address_test" }
 
+      it_behaves_like "a tork load line"
+
+
+      context "calling tork_load_line" do
+        let(:matches) { LineMatcher.new(line).tork_load_line }
+
+        context "the whole match" do
+          subject { matches[0] }
+          it { should == "Loaded suite tork-worker[1] test/unit/address_test" }
+        end
+        context "the file" do
+          subject { matches[1] }
+          it { should == "test/unit/address_test" }
+        end
+      end
+    end
   end
 end

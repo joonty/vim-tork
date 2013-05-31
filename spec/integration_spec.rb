@@ -62,6 +62,26 @@ module TorkLog
       end
     end
 
+    context "yet another ruby error log" do
+      let(:log) { open_test_log_file 'ruby_error_3.log' }
+      let(:errors) { Parser.new(log).parse.errors }
+
+      context "the error list" do
+        it_behaves_like "an error list with one error"
+      end
+
+      context "the error" do
+        let(:expected_text) { 'uninitialized constant TorkLog::Stream (NameError)' }
+        let(:expected_filename) { 'spec/stream_spec.rb' }
+        let(:expected_lnum) { '4' }
+        let(:expected_type) { 'E' }
+
+        subject { errors.first }
+
+        it_behaves_like "an error"
+      end
+    end
+
     context "an invalid ruby error" do
       let(:log) { open_test_log_file 'invalid_ruby_error_1.log' }
       let(:parser) { Parser.new(log) }
@@ -95,6 +115,32 @@ ERR
         it_behaves_like "an error"
       end
     end
+
+    context "a test::unit failure" do
+      let(:log) { open_test_log_file 'test_unit_failure_1.log' }
+      let(:errors) { Parser.new(log).parse.errors }
+
+      context "the error list" do
+        it_behaves_like "an error list with one error"
+      end
+
+      context "the error" do
+        let(:expected_text) do <<ERR.strip
+1) Failure:
+test: Address should have many companie. (AddressTest)
+    []:
+Expected Address to have a has_many association called companie (no association called companie)
+ERR
+        end
+        let(:expected_filename) { 'test/unit/address_test.rb' }
+        let(:expected_lnum) { '0' }
+        let(:expected_type) { 'E' }
+        subject { errors.first }
+
+        it_behaves_like "an error"
+      end
+    end
+
 
     context "an rspec error" do
       let(:log) { open_test_log_file 'rspec_failure_1.log' }
