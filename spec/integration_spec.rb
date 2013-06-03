@@ -8,11 +8,12 @@ end
 module TorkLog
   describe "parsing" do
     shared_examples "an error" do
-      it             { should be_a TestError }
-      its(:text)     { should == expected_text }
-      its(:filename) { should == expected_filename }
-      its(:lnum)     { should == expected_lnum }
-      its(:type)     { should == expected_type }
+      it                { should be_a TestError }
+      its(:clean_text) { should == expected_text }
+      its(:filename)    { should == expected_filename }
+      its(:lnum)        { should == expected_lnum }
+      its(:type)        { should == expected_type }
+
     end
 
     shared_examples "an error list with one error" do
@@ -71,7 +72,7 @@ module TorkLog
       end
 
       context "the error" do
-        let(:expected_text) { 'uninitialized constant TorkLog::Stream (NameError)' }
+        let(:expected_text) { 'in `<module:TorkLog>\': uninitialized constant TorkLog::Stream (NameError)' }
         let(:expected_filename) { 'spec/stream_spec.rb' }
         let(:expected_lnum) { '4' }
         let(:expected_type) { 'E' }
@@ -101,7 +102,7 @@ module TorkLog
 
       context "the error" do
         let(:expected_text) do <<ERR.strip
-1) Error:
+  1) Error:
 test: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):
 NameError: undefined local variable or method `root_pathh' for #<UserFlowsTest:0x000000036f2388>
     test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>'
@@ -126,7 +127,7 @@ ERR
 
       context "the error" do
         let(:expected_text) do <<ERR.strip
-1) Failure:
+  1) Failure:
 test: Address should have many companie. (AddressTest)
     []:
 Expected Address to have a has_many association called companie (no association called companie)
@@ -151,14 +152,15 @@ ERR
       end
 
       context "the error" do
-        let(:expected_text) do
-'1) parsing a test::unit error the error behaves like an error text 
+        let(:expected_text) do <<-ERR.strip
+  1) parsing a test::unit error the error behaves like an error text 
      Failure/Error: Unable to find matching line from backtrace
-       expected: "1) Error:\ntest: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):\nNameError: undefined local variable or method `root_pathh\' for #<UserFlowsTest:0x000000036f2388>\n    test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>\'\n"
-            got: "1) Error:\ntest: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):\nNameError: undefined local variable or method `root_pathh\' for #<UserFlowsTest:0x000000036f2388>\n    test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>\'" (using ==)
+       expected: "1) Error:\\ntest: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):\\nNameError: undefined local variable or method `root_pathh\' for #<UserFlowsTest:0x000000036f2388>\\n    test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>\'\\n"
+            got: "1) Error:\\ntest: a user should redirect to admin login when visiting admin subdomain. (UserFlowsTest):\\nNameError: undefined local variable or method `root_pathh\' for #<UserFlowsTest:0x000000036f2388>\\n    test/integration/user_flows_test.rb:8:in `block (2 levels) in <class:UserFlowsTest>\'" (using ==)
        Diff:
      Shared Example Group: "an error" called from spec/integration_spec.rb:95
-     # spec/integration_spec.rb:12:in `block (3 levels) in <module:TorkLog>\''
+     # spec/integration_spec.rb:12:in `block (3 levels) in <module:TorkLog>'
+          ERR
         end
         let(:expected_filename) { 'spec/integration_spec.rb' }
         let(:expected_lnum) { '12' }
@@ -183,7 +185,7 @@ ERR
       context "the first error" do
         subject { errors.first }
         let(:expected_text) do <<LIN.strip
-1) parsing a test::unit error the error list behaves like an error list with one error 
+  1) parsing a test::unit error the error list behaves like an error list with one error 
      Failure/Error: Unable to find matching line from backtrace
        expected #<TorkLog::Parser:0x00000002be8c08 @file=#<File:/home/jon/.vim/bundle/vim-tork/spec/logs/test_unit_error_1.log>, @errors=[]> to be a kind of Array
      Shared Example Group: "an error list with one error" called from spec/integration_spec.rb:80
@@ -197,7 +199,7 @@ LIN
       context "the last error" do
         subject { errors.last }
         let(:expected_text) do <<LIN.strip
-6) parsing a test::unit error the error behaves like an error type 
+  6) parsing a test::unit error the error behaves like an error type 
      Failure/Error: Unable to find matching line from backtrace
      NoMethodError:
        undefined method `type' for "type":String

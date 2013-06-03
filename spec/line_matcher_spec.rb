@@ -32,6 +32,16 @@ module TorkLog
       end
     end
 
+    shared_examples "a tork error line" do
+      let(:matcher) { LineMatcher.new line }
+
+      context "calling tork_error_line?" do
+        subject { matcher.tork_error_line? }
+
+        it { should be_true }
+      end
+    end
+
     shared_examples "the end of errors" do
       let(:matcher) { LineMatcher.new line }
 
@@ -214,6 +224,21 @@ LIN
         context "the file" do
           subject { matches[1] }
           it { should == "test/unit/address_test" }
+        end
+      end
+    end
+
+    context "a tork error line" do
+      let(:line) { "/home/jon/.rvm/gems/ruby-1.9.3-p286/gems/tork-19.3.0/lib/tork/master.rb:62:in `load': spec/integration_spec.rb:6: syntax error, unexpected $end, expecting keyword_end (SyntaxError)" }
+
+      it_behaves_like "a tork error line"
+
+      context "calling tork_error_line" do
+        let(:matches) { LineMatcher.new(line).tork_error_line }
+
+        context "the whole match" do
+          subject { matches[0] }
+          it { should == "/home/jon/.rvm/gems/ruby-1.9.3-p286/gems/tork-19.3.0/lib/tork/master.rb:62:in `load': " }
         end
       end
     end

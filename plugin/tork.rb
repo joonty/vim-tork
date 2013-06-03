@@ -4,8 +4,12 @@ module TorkLog
   class ParserError < StandardError; end
 
   TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
+    def clean_text
+      text.strip
+    end
+
     def to_s
-      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text}','type':'#{type}'}"
+      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text.strip}','type':'#{type}'}"
     end
   end
 
@@ -48,48 +52,44 @@ module TorkLog
     def parse
       parse_log
       self
+    rescue EOFError
+      # noop
+      self
     rescue Exception => e
       # Tag all exceptions with Torkify::Error
       e.extend Error
       raise e
-    ensure
-      @file.close
     end
 
   protected
     attr_writer :errors
+    attr_reader :reader
 
     def parse_log
-      while line = @file.gets
-        matcher = LineMatcher.new line
-        if matcher.ruby_error?
-          parse_ruby_error line
+      loop do
+        if reader.matcher.ruby_error?
+          parse_ruby_error
           if errors.empty?
             raise ParserError, "Failed to read error from log file"
           end
           break
-        elsif tork_line_match = matcher.tork_load_line
+        elsif tork_line_match = reader.matcher.tork_load_line
           @file_fallback = tork_line_match[1].strip + ".rb"
-        elsif matcher.test_error_or_failure?
-          lines = [line]
-          while new_line = @file.gets
-            new_matcher = LineMatcher.new(new_line)
-            if new_matcher.test_error_or_failure? || new_matcher.end_of_errors?
-              @file.seek(-new_line.length, IO::SEEK_CUR)
-              break
-            end
-            lines << new_line
-          end
-          parse_error_or_failure(lines)
+        elsif reader.matcher.test_error_or_failure?
+          parse_errors_or_failures
         end
+        reader.forward
       end
     end
 
-    def parse_ruby_error(line)
+    def parse_ruby_error
+      line = reader.line
+      if tork_match = reader.matcher.tork_error_line
+        line.slice! tork_match[0]
+      end
       matches = line.split(':')
       p matches
-      if matches.length >= 6
-        matches.shift(3)
+      if matches.length >= 3
         self.errors << TestError.new(matches.shift.strip,
                                      matches.shift.strip,
                                      matches.join(':').strip,
@@ -97,32 +97,33 @@ module TorkLog
       end
     end
 
-    def parse_error_or_failure(lines)
-      text = lines.join.strip
-      added_error = false
-      lines.each do |line|
-        matches = LineMatcher.new(line).error_description
+    def parse_errors_or_failures
+      until reader.matcher.end_of_errors?
+        if reader.matcher.test_error_or_failure?
+          error = TestError.new(@file_fallback, '0', '', 'E')
+          self.errors << error
+        end
+
+        matches = reader.matcher.error_description
+        error.text << reader.line
+
         if matches
           matches = matches.to_a
           matches.shift
-          self.errors << TestError.new(matches.shift.strip,
-                                       matches.shift.strip,
-                                       text, 'E')
-          added_error = true
-          break
+          error.filename = matches.shift.strip
+          error.lnum = matches.shift.strip
         end
-      end
-      unless added_error
-        self.errors << TestError.new(@file_fallback,
-                                     "0", text, 'E')
+        reader.forward
       end
     end
+
   end
 
   class LineMatcher
     PATTERNS = {
       'tork_load_line'        => /^Loaded suite tork[^\s]+\s(.+)/,
       'error_description'     => /^[\s#]*([^:]+):([0-9]+):in/,
+      'tork_error_line'       => /^.+tork\/master\.rb:[0-9]+:in [^:]+:\s/,
       'test_error_or_failure' => /^\s\s[0-9]+\)/,
       'test_summary'          => /^([0-9]+\s[a-z]+,)+/,
       'finished_line'         => /^Finished/
