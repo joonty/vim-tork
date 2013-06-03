@@ -14,11 +14,11 @@ module TorkLog
 
     def initialize(stream)
       @stream = stream
-      @line = stream.gets
+      @line = stream.readline
     end
 
     def forward
-      self.line = stream.gets
+      self.line = stream.readline
       self
     end
 
@@ -40,8 +40,8 @@ module TorkLog
   class Parser
     attr_reader :errors
 
-    def initialize(file)
-      @file = file
+    def initialize(stream)
+      @reader = LogReader.new stream
       self.errors = []
     end
 

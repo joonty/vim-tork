@@ -32,6 +32,22 @@ The final line
         it { should be_a LineMatcher }
       end
 
+      context "calling forward on the last line" do
+        before { reader.forward.forward }
+
+        it "should raise an EOF error" do
+          expect { reader.forward }.to raise_error EOFError
+        end
+      end
+
+    end
+
+    context "with an empty stream" do
+      let(:stream) { StringIO.new "" }
+
+      it "should raise an EOF error" do
+        expect { LogReader.new(stream) }.to raise_error EOFError
+      end
     end
   end
 end
