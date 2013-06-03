@@ -12,7 +12,6 @@ module TorkLog
       its(:lnum)     { should == lnum }
       its(:text)     { should == text }
       its(:type)     { should == type }
-      its(:to_s)     { should == "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text}','type':'#{type}'}" }
     end
 
     context "with some sample data" do

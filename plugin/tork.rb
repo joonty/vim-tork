@@ -3,13 +3,50 @@ module TorkLog
   module Error; end
   class ParserError < StandardError; end
 
-  class TestError < Struct.new(:filename, :lnum, :text, :type, :error)
-    def clean_text
-      text.strip
+  class QuickfixPopulator
+    def initialize(errors)
+      error_strings = errors.map(&:to_s)
+      @error_string = "[#{error_strings.join(',')}]"
+    end
+
+    def populate
+      VIM.command("call setqflist(#{@error_string})")
+      self
+    end
+
+    def open
+      VIM.command('copen')
+      self
+    end
+  end
+
+  class QuickfixError
+    def initialize(test_error)
+      @e = test_error
     end
 
     def to_s
-      "{'filename':'#{filename}','lnum':'#{lnum}','text':'#{text.strip}','type':'#{type}'}"
+      pairs = []
+      pairs << quote_pair('filename', @e.filename)
+      pairs << quote_pair('lnum', @e.lnum)
+      pairs << quote_pair('text', @e.clean_text)
+      pairs << quote_pair('type', @e.type)
+      "{#{pairs.join(",")}}"
+    end
+
+  protected
+    def quote_pair(name, value)
+      "'#{name}':'#{quote value}'"
+    end
+
+    def quote(string)
+      string.to_s.gsub("'","\'")
+    end
+  end
+
+  class TestError < Struct.new(:filename, :lnum, :text, :type)
+    def clean_text
+      text.strip
     end
   end
 
@@ -150,10 +187,14 @@ module TorkLog
 end
 
 def tork_parse_log(log_filename, allow_debug = False)
-  parser = TorkLog::Parser.new File.open(log_filename)
+  f = File.open(log_filename)
+  parser = TorkLog::Parser.new f
   parser.parse
-  errors = parser.errors.map(&:to_s)
-  error_string = "[#{errors.join(',')}]"
-  VIM.command("call setqflist(#{error_string})")
-  VIM.command('copen')
+  errors = parser.errors.map { |e| QuickfixError.new(e) }
+  quickfix = QuickfixPopulator.new errors
+  quickfix.populate.open
+rescue TorkLog::Error => e
+  VIM.command("echoerr \"#{e}\"")
+ensure
+  f.close
 end

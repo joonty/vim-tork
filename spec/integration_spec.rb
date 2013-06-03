@@ -88,7 +88,7 @@ module TorkLog
       let(:parser) { Parser.new(log) }
 
       it "raises a parse error" do
-        expect { parser.parse }.to raise_error ParserError
+        expect { parser.parse }.to raise_error ParseError
       end
     end
 
