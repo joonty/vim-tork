@@ -5,19 +5,39 @@ module Tork
 
   class QuickfixPopulator
     def initialize(errors)
-      error_strings = errors.map(&:to_s)
-      @error_string = "[#{error_strings.join(',')}]"
-      puts @error_string.inspect
+      @errors = errors
     end
 
     def populate
-      VIM.command("call setqflist(#{@error_string})")
+      quickfix = VIM.evaluate('getqflist()')
+      if quickfix && quickfix.any?
+        quickfix.each do |e|
+          unless e['type'] == 'E'
+            break
+          end
+          filename = VIM.evaluate("bufname(\"#{e['bufnr']}\")")
+          unless filename_in_errors? filename
+            @errors << QuickfixError.new(e)
+          end
+        end
+      end
+      VIM.command("call setqflist(#{error_string})")
       self
     end
 
     def open
       VIM.command('copen')
       self
+    end
+
+    def error_string
+      error_strings = @errors.map(&:to_s)
+      "[#{error_strings.join(',')}]"
+    end
+
+  protected
+    def filename_in_errors?(filename)
+      @errors.select {|e| e[:filename] == filename}.any?
     end
   end
 
@@ -26,12 +46,20 @@ module Tork
       @e = test_error
     end
 
+    def method_missing(name, *args)
+      @e.send name, *args
+    end
+
     def to_s
       pairs = []
-      pairs << quote_pair('filename', @e.filename)
-      pairs << quote_pair('lnum', @e.lnum)
-      pairs << quote_pair('text', @e.clean_text)
-      pairs << quote_pair('type', @e.type)
+      @e.each_pair do |n, v|
+        pairs << quote_pair(n, v)
+      end
+      #pairs = []
+      #pairs << quote_pair('filename', @e.filename)
+      #pairs << quote_pair('lnum', @e.lnum)
+      #pairs << quote_pair('text', @e.clean_text)
+      #pairs << quote_pair('type', @e.type)
       "{#{pairs.join(",")}}"
     end
 
