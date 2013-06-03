@@ -3,7 +3,7 @@ module TorkLog
   module Error; end
   class ParserError < StandardError; end
 
-  TestError = Struct.new(:filename, :lnum, :text, :type, :error) do
+  class TestError < Struct.new(:filename, :lnum, :text, :type, :error)
     def clean_text
       text.strip
     end
@@ -88,7 +88,6 @@ module TorkLog
         line.slice! tork_match[0]
       end
       matches = line.split(':')
-      p matches
       if matches.length >= 3
         self.errors << TestError.new(matches.shift.strip,
                                      matches.shift.strip,
@@ -147,11 +146,6 @@ module TorkLog
 
   protected
     attr_accessor :line
-  end
-
-  class RubyErrorParser
-    def initialize()
-    end
   end
 end
 
