@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module TorkLog
+module Tork
   describe QuickfixError do
     context "with a test error" do
       let(:error) { TestError.new('filename.rb', 0, 'The text', 'E') }

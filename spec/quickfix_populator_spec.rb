@@ -5,7 +5,7 @@ module VIM
   end
 end
 
-module TorkLog
+module Tork
   describe QuickfixPopulator do
     let(:error) { double('QuickfixError') }
 

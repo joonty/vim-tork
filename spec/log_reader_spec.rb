@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'stringio'
 
-module TorkLog
+module Tork
   describe LogReader do
     context "with an IO like data stream" do
       let(:stream) do

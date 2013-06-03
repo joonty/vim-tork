@@ -1,5 +1,5 @@
 
-module TorkLog
+module Tork
   module Error; end
   class ParserError < StandardError; end
 
@@ -188,12 +188,12 @@ end
 
 def tork_parse_log(log_filename, allow_debug = False)
   f = File.open(log_filename)
-  parser = TorkLog::Parser.new f
+  parser = Tork::Parser.new f
   parser.parse
   errors = parser.errors.map { |e| QuickfixError.new(e) }
   quickfix = QuickfixPopulator.new errors
   quickfix.populate.open
-rescue TorkLog::Error => e
+rescue Tork::Error => e
   VIM.command("echoerr \"#{e}\"")
 ensure
   f.close

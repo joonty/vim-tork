@@ -5,7 +5,7 @@ def open_test_log_file(name)
   File.open "#{root}/logs/#{name}"
 end
 
-module TorkLog
+module Tork
   describe "parsing" do
     shared_examples "an error" do
       it                { should be_a TestError }

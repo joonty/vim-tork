@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module TorkLog
+module Tork
   describe TestError do
 
     shared_examples "an error" do

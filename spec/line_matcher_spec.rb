@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module TorkLog
+module Tork
   describe LineMatcher do
     shared_examples "a ruby error" do
       let(:matcher) { LineMatcher.new line }
