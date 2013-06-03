@@ -7,6 +7,7 @@ module Tork
     def initialize(errors)
       error_strings = errors.map(&:to_s)
       @error_string = "[#{error_strings.join(',')}]"
+      puts @error_string.inspect
     end
 
     def populate
@@ -36,11 +37,11 @@ module Tork
 
   protected
     def quote_pair(name, value)
-      "'#{name}':'#{quote value}'"
+      "\"#{name}\":\"#{quote value}\""
     end
 
     def quote(string)
-      string.to_s.gsub("'","\'")
+      string.to_s.gsub('"','\"')
     end
   end
 
@@ -187,14 +188,14 @@ module Tork
 end
 
 def tork_parse_log(log_filename, allow_debug = False)
-  f = File.open(log_filename)
-  parser = Tork::Parser.new f
+  log = File.open(log_filename)
+  parser = Tork::Parser.new log
   parser.parse
-  errors = parser.errors.map { |e| QuickfixError.new(e) }
-  quickfix = QuickfixPopulator.new errors
+  errors = parser.errors.map { |e| Tork::QuickfixError.new(e) }
+  quickfix = Tork::QuickfixPopulator.new errors
   quickfix.populate.open
 rescue Tork::Error => e
   VIM.command("echoerr \"#{e}\"")
 ensure
-  f.close
+  log.close
 end
