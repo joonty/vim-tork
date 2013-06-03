@@ -65,8 +65,8 @@ module Tork
           {'lnum' => 34, 'bufnr' => 7, 'col' => 0, 'valid' => 1, 'vcol' => 0, 'nr' => 0, 'type' => 'E', 'pattern' => '', 'text' => 'The first text'},
           {'lnum' => 53, 'bufnr' =>  8, 'col' => 0, 'valid' => 1, 'vcol' => 0, 'nr' => 0, 'type' => 'E', 'pattern' => '', 'text' => 'The second text'}
         ])
-        VIM.should_receive(:evaluate).with('bufname("7")').and_return('abc')
-        VIM.should_receive(:evaluate).with('bufname("8")').and_return('efg')
+        VIM.should_receive(:evaluate).with('bufname(7)').and_return('abc')
+        VIM.should_receive(:evaluate).with('bufname(8)').and_return('efg')
       end
 
       subject { QuickfixPopulator.new [error, error] }

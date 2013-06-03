@@ -15,7 +15,7 @@ module Tork
           unless e['type'] == 'E'
             break
           end
-          filename = VIM.evaluate("bufname(\"#{e['bufnr']}\")")
+          filename = VIM.evaluate("bufname(#{e['bufnr']})")
           unless filename_in_errors? filename
             @errors << QuickfixError.new(e)
           end
@@ -55,11 +55,6 @@ module Tork
       @e.each_pair do |n, v|
         pairs << quote_pair(n, v)
       end
-      #pairs = []
-      #pairs << quote_pair('filename', @e.filename)
-      #pairs << quote_pair('lnum', @e.lnum)
-      #pairs << quote_pair('text', @e.clean_text)
-      #pairs << quote_pair('type', @e.type)
       "{#{pairs.join(",")}}"
     end
 
@@ -69,7 +64,7 @@ module Tork
     end
 
     def quote(string)
-      string.to_s.gsub('"','\"')
+      string.to_s.gsub(/[^\\]"/,'\"')
     end
   end
 

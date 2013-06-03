@@ -191,9 +191,12 @@ ERR
      Shared Example Group: "an error list with one error" called from spec/integration_spec.rb:80
      # spec/integration_spec.rb:20:in `block (3 levels) in <module:TorkLog>'
 LIN
+        end
         let(:expected_filename) { 'spec/integration_spec.rb' }
         let(:expected_lnum) { '20' }
-        end
+        let(:expected_type) { 'E' }
+
+        it_behaves_like "an error"
       end
 
       context "the last error" do
@@ -206,9 +209,12 @@ LIN
      Shared Example Group: "an error" called from spec/integration_spec.rb:94
      # spec/integration_spec.rb:14:in `block (3 levels) in <module:TorkLog>'
 LIN
+        end
         let(:expected_filename) { 'spec/integration_spec.rb' }
         let(:expected_lnum) { '14' }
-        end
+        let(:expected_type) { 'E' }
+
+        it_behaves_like "an error"
       end
     end
   end
