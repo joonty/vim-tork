@@ -23,20 +23,27 @@ module Quickfix
   end
 
   class Populator
+    attr_reader :errors_populated
+
     def initialize(api)
       @api = api
       @excluded_buffers = []
+      @errors_populated = 0
     end
 
     def exclude(file)
       bufnum = @api.buffer_from_file(file).to_i
-      @excluded_buffers << bufnum if bufnum > 0
+      if bufnum > 0 && !@excluded_buffers.include?(bufnum)
+        @excluded_buffers << bufnum
+      end
       self
     end
 
     def populate(errors)
       determine_excluded_buffers errors
       kept_errors = exclude_errors api.get
+      all_errors = kept_errors + errors
+      @errors_populated = all_errors.length
       api.set kept_errors + errors
       self
     end
@@ -88,12 +95,6 @@ module Tork
   class TestError < Struct.new(:filename, :lnum, :text, :type)
     def clean_text
       text.strip
-    end
-
-    def to_hash
-      hsh = {}
-      each_pair { |k, v| hsh[k] = v }
-      hsh
     end
   end
 
@@ -234,16 +235,21 @@ module Tork
 end
 
 def tork_parse_log(log_filename, allow_debug = False)
-  log = File.open(log_filename)
+  log = File.open log_filename
   parser = Tork::Parser.new log
   parser.parse
   errors = parser.errors
-  quickfix = Quickfix::API.new
-  populator = Quickfix::Populator.new quickfix
-  populator.populate errors
-  quickfix.open
+  load_quickfix errors, log_filename
 rescue Tork::Error => e
   VIM.command("echoerr \"#{e}\"")
 ensure
   log.close
+end
+
+def load_quickfix(errors, log_filename)
+  quickfix = Quickfix::API.new
+  populator = Quickfix::Populator.new quickfix
+  populator.exclude File.basename(log_filename.chomp('.log'))
+  populator.populate errors
+  quickfix.open if populator.errors_populated > 0
 end
