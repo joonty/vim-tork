@@ -1,58 +1,69 @@
-
-module Tork
-  module Error; end
-  class ParserError < StandardError; end
-
-  class QuickfixPopulator
-    def initialize(errors)
-      @errors = errors
+module Quickfix
+  class API
+    def initialize
+      @stringifier = Stringifier.new
     end
 
-    def populate
-      quickfix = VIM.evaluate('getqflist()')
-      if quickfix && quickfix.any?
-        quickfix.each do |e|
-          unless e['type'] == 'E'
-            break
-          end
-          filename = VIM.evaluate("bufname(#{e['bufnr']})")
-          unless filename_in_errors? filename
-            @errors << QuickfixError.new(e)
-          end
-        end
-      end
-      VIM.command("call setqflist(#{error_string})")
-      self
+    def get
+      VIM.evaluate 'getqflist()'
+    end
+
+    def buffer_from_file(file)
+      VIM.evaluate "bufnr(\"#{file}\")"
+    end
+
+    def set(errors)
+      error_strings = errors.map { |e| @stringifier.convert e }
+      VIM.command "call setqflist([#{error_strings.join(",")}])"
     end
 
     def open
-      VIM.command('copen')
-      self
-    end
-
-    def error_string
-      error_strings = @errors.map(&:to_s)
-      "[#{error_strings.join(',')}]"
-    end
-
-  protected
-    def filename_in_errors?(filename)
-      @errors.select {|e| e[:filename] == filename}.any?
+      VIM.command 'copen'
     end
   end
 
-  class QuickfixError
-    def initialize(test_error)
-      @e = test_error
+  class Populator
+    def initialize(api)
+      @api = api
+      @excluded_buffers = []
     end
 
-    def method_missing(name, *args)
-      @e.send name, *args
+    def exclude(file)
+      bufnum = @api.buffer_from_file(file).to_i
+      @excluded_buffers << bufnum if bufnum > 0
+      self
     end
 
-    def to_s
+    def populate(errors)
+      determine_excluded_buffers errors
+      kept_errors = exclude_errors api.get
+      api.set kept_errors + errors
+      self
+    end
+
+  protected
+    attr_reader :api, :excluded_buffers
+
+    def determine_excluded_buffers(errors)
+      unique_file_errors = errors.uniq { |e| e['filename'] }
+      unique_file_errors.each { |e| exclude e['filename'] }
+    end
+
+    def exclude_errors(errors)
+      if errors && errors.any?
+        errors.keep_if { |e|
+          e['type'] == 'E' && !excluded_buffers.include?(e['bufnr'].to_i)
+        }
+      else
+        []
+      end
+    end
+  end
+
+  class Stringifier
+    def convert(enumerable)
       pairs = []
-      @e.each_pair do |n, v|
+      enumerable.each_pair do |n, v|
         pairs << quote_pair(n, v)
       end
       "{#{pairs.join(",")}}"
@@ -64,13 +75,25 @@ module Tork
     end
 
     def quote(string)
-      string.to_s.gsub(/[^\\]"/,'\"')
+      string.to_s.gsub(/['"\\\x0]/,'\\\\\0')
+      #string.to_s.gsub(/([^\\])"/,'\1\"')
     end
   end
+end
+
+module Tork
+  module Error; end
+  class ParserError < StandardError; end
 
   class TestError < Struct.new(:filename, :lnum, :text, :type)
     def clean_text
       text.strip
+    end
+
+    def to_hash
+      hsh = {}
+      each_pair { |k, v| hsh[k] = v }
+      hsh
     end
   end
 
@@ -214,9 +237,11 @@ def tork_parse_log(log_filename, allow_debug = False)
   log = File.open(log_filename)
   parser = Tork::Parser.new log
   parser.parse
-  errors = parser.errors.map { |e| Tork::QuickfixError.new(e) }
-  quickfix = Tork::QuickfixPopulator.new errors
-  quickfix.populate.open
+  errors = parser.errors
+  quickfix = Quickfix::API.new
+  populator = Quickfix::Populator.new quickfix
+  populator.populate errors
+  quickfix.open
 rescue Tork::Error => e
   VIM.command("echoerr \"#{e}\"")
 ensure

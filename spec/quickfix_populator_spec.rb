@@ -1,80 +1,59 @@
 require 'spec_helper'
 
-module VIM
-  def command
-    ""
-  end
+module Quickfix
+  describe Populator do
+    let(:api) { double('API') }
+    before { api.stub(:buffer_from_file) }
+    subject { Populator.new api }
 
-  def evaluate
-    ""
-  end
-end
-
-module Tork
-  describe QuickfixPopulator do
-    let(:error) { QuickfixError.new({filename: 'abc'}) }
-    before { VIM.stub(:evaluate) }
-    subject { QuickfixPopulator.new [error] }
-
-    context "creating a populator" do
-      it "should call to_s on the error" do
-        error.should_receive(:to_s).and_return("The error")
-        subject.error_string
-      end
-
-      it "should open the quickfix list" do
-        VIM.should_receive(:command).with("copen")
-        subject.open
+    context "calling exclude with a file" do
+      let(:file) { 'path/to/file.rb' }
+      it "should get the buffer number from the file" do
+        api.should_receive(:buffer_from_file).with(file).and_return(3)
+        subject.exclude file
       end
     end
 
-    context "populating with an error" do
+    context "populating a quickfix list with an error" do
+      let(:error) { {filename: 'test/file.rb', text: 'The error'} }
+
       before do
-        error.should_receive(:to_s).and_return("{\"filename\":\"abc\"}")
+        api.should_receive(:get)
       end
 
-      subject { QuickfixPopulator.new [error] }
-
-      it "should set the Vim qflist" do
-        VIM.should_receive(:command).with("call setqflist([{\"filename\":\"abc\"}])")
-        subject.populate
+      it "should set the quickfix list" do
+        api.should_receive(:set).with([error])
+        subject.populate [error]
       end
     end
 
-    context "with multiple errors" do
+    context "populating an already populated quickfix list" do
+      let(:error) { {filename: 'test/file.rb', text: 'The error'} }
+      let(:existing) { [{'filename' => 'another/file.rb', 'text' => 'Another error', 'type' => 'E'}] }
+
       before do
-        error.should_receive(:to_s).twice.and_return("{\"filename\":\"abc\"}")
+        api.should_receive(:get).and_return(existing)
       end
 
-      subject { QuickfixPopulator.new [error, error] }
-
-      it "should set the Vim qflist" do
-        VIM.should_receive(:command).
-          with("call setqflist([{\"filename\":\"abc\"},{\"filename\":\"abc\"}])")
-        subject.populate
+      it "should set the quickfix list" do
+        errors = existing + [error]
+        api.should_receive(:set).with(errors)
+        subject.populate [error]
       end
     end
 
-    context "with existing quickfix errors" do
-      before do
-        error.should_receive(:to_s).twice.and_return("{\"filename\":\"abc\"}")
-      end
+    context "populating an already populated quickfix list with errors from the same file" do
+      let(:error) { {filename: 'test/file.rb', text: 'The error'} }
+      let(:existing) { [{'filename' => 'test/file.rb', 'bufnr' => '3', 'text' => 'Another error', 'type' => 'E'}] }
 
       before do
-        VIM.should_receive(:evaluate).with('getqflist()').and_return([
-          {'lnum' => 34, 'bufnr' => 7, 'col' => 0, 'valid' => 1, 'vcol' => 0, 'nr' => 0, 'type' => 'E', 'pattern' => '', 'text' => 'The first text'},
-          {'lnum' => 53, 'bufnr' =>  8, 'col' => 0, 'valid' => 1, 'vcol' => 0, 'nr' => 0, 'type' => 'E', 'pattern' => '', 'text' => 'The second text'}
-        ])
-        VIM.should_receive(:evaluate).with('bufname(7)').and_return('abc')
-        VIM.should_receive(:evaluate).with('bufname(8)').and_return('efg')
+        api.should_receive(:buffer_from_file).and_return('3')
+        api.should_receive(:get).and_return(existing)
       end
 
-      subject { QuickfixPopulator.new [error, error] }
-
-      it "should replace the first error" do
-        VIM.should_receive(:command).
-          with("call setqflist([{\"filename\":\"abc\"},{\"filename\":\"abc\"},{\"lnum\":\"53\",\"bufnr\":\"8\",\"col\":\"0\",\"valid\":\"1\",\"vcol\":\"0\",\"nr\":\"0\",\"type\":\"E\",\"pattern\":\"\",\"text\":\"The second text\"}])")
-        subject.populate
+      it "should set the quickfix list" do
+        api.should_receive(:set).with([error])
+        subject.populate [error]
       end
     end
   end
