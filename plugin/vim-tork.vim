@@ -40,7 +40,7 @@ if !exists("g:tork_debug")
 endif
 
 command! -nargs=* -complete=file TorkRun call s:TorkSendFile(<q-args>)
-command! TorkRunAll call s:TorkSend("run_test_files")
+command! TorkRunAll call s:TorkSend("run_all_test_files")
 command! TorkStop call s:TorkSend("stop_running_test_files")
 command! TorkKill call s:TorkSend("stop_running_test_files SIGKILL")
 command! TorkRerunPassed call s:TorkSend("rerun_passed_test_files")
@@ -50,11 +50,26 @@ command! -nargs=1 -complete=file TorkParseLog call s:TorkParseLog(<f-args>)
 command! -nargs=+ -complete=customlist,s:TorkSendOptions Tork call s:TorkSend(<q-args>)
 
 function! s:TorkSend(arg_string)
-    let l:cmd = "echo " . a:arg_string . " | tork-remote tork-driver"
+    let l:cmd = s:TorkCdCmd()
+    let l:cmd .= "echo " . a:arg_string . " | tork-remote tork-driver"
     if g:tork_debug == 1
-        echo "tork: ". l:cmd
+        echo "tork: running `" . l:cmd . "`"
     endif
-    call system(l:cmd)
+    let l:op = system(l:cmd)
+    if len(l:op) > 0
+        echoerr "tork: " . l:op
+    endif
+endfunction
+
+function! s:TorkCdCmd()
+    if exists("*g:TorkDir")
+        if g:tork_debug == 1
+            echo "vim-tork: calling user function g:TorkDir"
+        endif
+        return "cd " . g:TorkDir() . " && "
+    else
+        return ""
+    endif
 endfunction
 
 function! s:TorkSendOptions(A, L, P)
@@ -79,7 +94,7 @@ function! s:TorkSendFile(file)
         let l:file = a:file
     endif
     if len(l:file) == 0
-        echoerr "No test file specified"
+        echoerr "tork: no test file specified"
     else
         call s:TorkSend("run_test_file " . l:file)
     endif
