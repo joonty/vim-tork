@@ -45,12 +45,12 @@ command! TorkStop call s:TorkSend("stop_running_test_files")
 command! TorkKill call s:TorkSend("stop_running_test_files SIGKILL")
 command! TorkRerunPassed call s:TorkSend("rerun_passed_test_files")
 command! TorkRerunFailed call s:TorkSend("rerun_failed_test_files")
-command! TorkReabsorb call s:TorkSend("reabsorb_overhead")
+command! TorkAbsorb call s:TorkSend("reabsorb_overhead")
 command! -nargs=1 -complete=file TorkParseLog call s:TorkParseLog(<f-args>)
 command! -nargs=+ -complete=customlist,s:TorkSendOptions Tork call s:TorkSend(<q-args>)
 
 function! s:TorkSend(arg_string)
-    let l:cmd = "echo " . a:arg_string . " | tork-remote tork-engine"
+    let l:cmd = "echo " . a:arg_string . " | tork-remote tork-driver"
     if g:tork_debug == 1
         echo "tork: ". l:cmd
     endif
