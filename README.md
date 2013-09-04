@@ -17,8 +17,6 @@ and run `vim +BundleInstall +qall` from a terminal.
 
 If you aren't using vundle, you will have to extract the files in each folder to the correct folder in *.vim/*.
 
-**Note:** your vim installation must be compiled with *ruby* for this plugin to work.
-
 ### Configuration
 
 TODO: configuration
